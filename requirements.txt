@@ -1,0 +1,29 @@
+# --- FastAPI 服務相關 ---
+fastapi
+uvicorn
+python-multipart
+
+# --- VoxCPM 核心依賴  ---
+torch>=2.5.0
+torchaudio>=2.5.0
+torchcodec
+transformers>=4.36.2
+einops
+gradio>=6,<7
+inflect
+addict
+wetext
+modelscope>=1.22.0
+datasets>=3,<4
+huggingface-hub
+pydantic
+tqdm
+simplejson
+sortedcontainers
+soundfile
+librosa
+matplotlib
+funasr
+spaces
+argbind
+safetensors
