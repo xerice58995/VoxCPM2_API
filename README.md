@@ -1,30 +1,22 @@
 ## 快速啟動 VoxCPM2
 
-1. 建立環境:
+1. 使用Docker建立環境:
    ```bash
-   conda create -n voxcpm python=3.10
-   conda activate voxcpm
+   docker build -t voxcpm_api .
    ```
 
-2. 安裝voxcpm2
+2. 啟動 API:
     ```bash
-   pip install voxcpm
-   ```
-
-3. 安裝依賴:
-    ```bash
-    # 建議先安裝對應顯卡的 PyTorch
-    pip install torch torchaudio --index-url [https://download.pytorch.org/whl/cu121](https://download.pytorch.org/whl/cu121)
-    # 安裝其餘依賴
-    pip install -r requirements.txt
+    docker run --rm —gpus all -d -p 10005:8000 --name tts_test2 voxcpm_api
     ```
 
-4. 啟動 API:
-    ```bash
-    python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-    ```
+    啟動後請訪問：http://<伺服器網址>:10005/docs 進入 Swagger UI 進行測試。
 
-    啟動後請訪問：http://localhost:8000/docs 進入 Swagger UI 進行測試。
+3. 關閉 API:
+    ```bash
+    docker stop tts_test2 
+    docker rm tts_test2
+    ```
 
 
 ## 使用說明
