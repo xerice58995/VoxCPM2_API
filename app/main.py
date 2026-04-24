@@ -1,10 +1,14 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi import Response
 from app.core import VoxCPMEngine
 from contextlib import asynccontextmanager
 import io, os, uuid, soundfile as sf
 import torch
 import gc
+import numpy as np
+import tempfile
+from typing import Optional
 
 
 engine = VoxCPMEngine()
@@ -39,7 +43,7 @@ async def voice_design(
     text: str = Form(
         ...,
         description="【必填】想要模型說出的文字內容，可於括號內()自訂說話者的語氣，使用簡體中文以避免發音錯誤。",
-        example="(中年女性，温雅中性的声音)你好，我是一位虚拟助理，今天很高兴能够有这个机会认识各位，并和各位介绍功能。"
+        examples=["(中年女性，温雅中性的声音)你好，我是一位虚拟助理，今天很高兴能够有这个机会认识各位，并和各位介绍功能。"]
     ),
     cfg_value: float = 2.0,
     inference_timesteps: int = 10,
@@ -63,7 +67,7 @@ async def voice_cloning(
     text: str = Form(
         ...,
         description="【必填】想要模型說出的文字內容，可於括號內()自訂說話者的語氣，使用簡體中文以避免發音錯誤。",
-        example="(中年女性，温雅中性的声音)你好，我是一位虚拟助理，今天很高兴能够有这个机会认识各位，并和各位介绍功能。"
+        examples=["(中年女性，温雅中性的声音)你好，我是一位虚拟助理，今天很高兴能够有这个机会认识各位，并和各位介绍功能。"]
     ),
     reference_wav_path: UploadFile = File(
         ...,
@@ -103,15 +107,16 @@ async def ultimate_cloning(
     text: str = Form(
         ...,
         description="【必填】想要模型說出的文字內容，高還原語音克隆不支援自訂說話者的語氣，使用簡體中文以避免發音錯誤。",
-        example="你好，我是一位虚拟助理，今天很高兴能够有这个机会认识各位，并和各位介绍功能。"
+        examples=["你好，我是一位虚拟助理，今天很高兴能够有这个机会认识各位，并和各位介绍功能。"]
     ),
     prompt_wav_path: UploadFile = File(
         ...,
         description="【必填】參考音檔（樣本），15秒左右即可，可從Samples資料夾選取。",
     ),
-    prompt_text: str = Form(
-        ...,
-        description="【選填】上傳音檔的文字稿。",
+    prompt_text: Optional[str] = Form(
+        None,
+        description="【選填】上傳音檔的文字稿，可留白。",
+        examples=["【選填】上傳音檔的文字稿。",]
     ),
     reference_wav_path: UploadFile = File(
         ...,
@@ -146,7 +151,34 @@ async def save_temp_file(upload_file: UploadFile):
     return tmp_path
 
 def wav_to_stream(wav, sr):
-    buffer = io.BytesIO()
-    sf.write(buffer, wav, sr, format='WAV')
-    buffer.seek(0)
-    return StreamingResponse(buffer, media_type="audio/wav")
+    # 如果 wav 是 [[...]] 這種格式，我們需要取出裡面的內容
+    while isinstance(wav, list) and len(wav) == 1 and (isinstance(wav[0], list) or hasattr(wav[0], 'shape')):
+        print("DEBUG: 偵測到嵌套結構，正在拆解...")
+        wav = wav[0]
+
+    # 1. 處理不同類型的輸入
+    if isinstance(wav, list):
+        # 如果是 list，先轉成 numpy
+        wav = np.array(wav)
+    elif hasattr(wav, 'cpu'):
+        # 如果是 torch tensor，轉到 cpu 並轉成 numpy
+        wav = wav.cpu().numpy()
+
+    wav = wav.astype(np.float32).flatten()
+
+    print(f"DEBUG: 最終音訊採樣數: {len(wav)}")
+
+    # 數據正規化與防爆音
+    if np.abs(wav).max() > 0:
+        wav = wav / np.abs(wav).max()
+
+    # 存成實體暫存檔 (Swagger UI 顯示 Bug )
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+
+    sf.write(temp_file.name, wav, sr if sr else 24000, format='WAV', subtype='PCM_16')
+
+    return FileResponse(
+        path=temp_file.name,
+        media_type="audio/wav",
+        filename="vox_gen.wav"
+    )
