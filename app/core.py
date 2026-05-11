@@ -21,7 +21,7 @@ class VoxCPMEngine:
         self.model = VoxCPM.from_pretrained(
             "openbmb/VoxCPM2",
             load_denoiser=False,
-            cache_dir="/app/model_weights"
+            cache_dir="./model_weights"
         )
         self.model.to(self.device)
 
