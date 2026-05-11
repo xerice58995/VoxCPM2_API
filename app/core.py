@@ -9,14 +9,6 @@ class VoxCPMEngine:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = None
 
-        if model_path:
-            self.model_path = Path(model_path)
-        else:
-            current_dir = Path(__file__).parent.parent
-            self.model_path = current_dir / "model_weights" / "VoxCPM2"
-
-        print(f"📁 模型路徑: {self.model_path}")
-
     def load_model(self):
         self.model = VoxCPM.from_pretrained(
             "openbmb/VoxCPM2",
