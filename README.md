@@ -7,7 +7,11 @@
 
 2. 啟動 API:
     ```bash
-    docker run --rm —gpus all -d -p 10005:8000 --name tts_test2 voxcpm_api
+    docker run --rm —gpus all -d \
+    -p 10005:8000 \
+    --name tts_test2 \
+    -v /伺服器路徑/VoxCPM2_API/model_weights:/app/model_weights \
+    voxcpm_api
     ```
 
     啟動後請訪問：http://<伺服器網址>:10005/docs 進入 Swagger UI 進行測試。
