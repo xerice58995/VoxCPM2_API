@@ -7,10 +7,10 @@
 
 2. 啟動 API:
     ```bash
-    docker run --rm —gpus all -d \
-    -p 10005:8000 \
+    docker run --rm --gpus all -d \
+    -p 8000:8000 \
     --name tts_test2 \
-    -v /伺服器路徑/VoxCPM2_API/model_weights:/app/model_weights \
+    -v 伺服器網址/model_weights:/app/model_weights \
     voxcpm_api
     ```
 

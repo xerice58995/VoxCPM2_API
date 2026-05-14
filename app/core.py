@@ -15,7 +15,6 @@ class VoxCPMEngine:
             load_denoiser=False,
             cache_dir="/app/model_weights"
         )
-        self.model.to(self.device)
 
     def generate(self, **kwargs):
         if self.model is None:
